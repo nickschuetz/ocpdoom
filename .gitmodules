@@ -1,0 +1,3 @@
+[submodule "monster"]
+	path = monster
+	url = https://github.com/nickschuetz/monster.git
