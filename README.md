@@ -96,7 +96,7 @@ oc logs bc/monster -f -n monsters
 oc get pods -n monsters
 ```
 With an output similar to this:
-```bash
+```console
 NAME                       READY   STATUS      RESTARTS   AGE
 monster-1-build            0/1     Completed   0          11m
 monster-56c7d99bdd-c874h   1/1     Running     0          4m29s
