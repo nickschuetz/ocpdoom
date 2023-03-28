@@ -28,20 +28,9 @@ oc new-project monsters
 oc new-project ocpdoom
 ```
 
-2. This seemingly endless array of open source projects that we will be utilizing in this example has several parts once built into the `ocpdoom` container:
-
-  * DOOM binary: `/usr/local/games/psdoom` 
-  * A UNIX domain socket: `/app/socket/dockerdoom.socket` - For commnucation between DOOM and dockerdoomd
-  * Go Application: `/usr/bin/`[ocpdoom](https://github.com/nickschuetz/ocpdoom/blob/main/ocpdoom.go)
-  * X11 Server: `/usr/bin/Xvfb`
-  * VNC Server: `/usr/bin/x11vnc`  
-  * kubectl: `/usr/bin/kubectl` - Used to interface with the OpenShift cluster
-
-To get some insight into what's going on when OpenShift starts the `ocpdoom` [container](https://docs.openshift.com/container-platform/latest/nodes/containers/nodes-containers-using.html) in it's [pod](https://docs.openshift.com/container-platform/latest/nodes/pods/nodes-pods-using.html) see this [code snipit](https://github.com/nickschuetz/ocpdoom/blob/main/ocpdoom.go#L170-L178) and dig in from there.
+2. We will now create a service account named `doomguy`, create a cluster role named `monster-control` and assign it to him:
 
 **NOTE: this is for demonstration puposes only. Do not run this on production systems.**
-
-We will now create a service account named `doomguy`, create a cluster role named `monster-control` and assign it to him:
 
 ```bash
 oc create serviceaccount doomguy -n ocpdoom
