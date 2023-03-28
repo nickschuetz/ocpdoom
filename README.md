@@ -86,7 +86,7 @@ We can also narrow down the scope of where we want ocpdoom to focus by setting t
 oc set env deployment ocpdoom NAMESPACE=monsters
 ```
 
-Now check to see if your application pod is in a "Ready" state:
+Now check to see if your application pod is in a READY and Running state:
 
 ```bash
 oc get pods -n ocpdoom
@@ -205,7 +205,7 @@ Those monsters represent the pods in your monsters namespace. If you shoot those
 However, there’s a problem! Since `oc new-app` also created a Kubernetes [ReplicaSet](https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/) it will respawn that missing pod monster. So really the only way to get rid of all the monster is through a non violent tactic and tell them nicely through the command line using the `oc scale` command:
 
 ```bash
-oc scale deployment/ocpdoom --replicas=0 -n monsters 
+oc scale deployment monster --replicas=0 -n monsters 
 ```
 
 Once all the pods are [Terminated](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-state-terminated) all the active monsters in the field should vanish. But watch out there are other creatures lurking around! Enjoy :boom:
