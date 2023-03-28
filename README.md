@@ -223,8 +223,8 @@ Once all the pods are [Terminated](https://kubernetes.io/docs/concepts/workloads
 
 ## Cheats
 
-If you enter the following codes for their cooresponding cheat:
+Enter the following codes for their cooresponding cheat:
 
-* `idspispopd` - Let's you walk through walls
+* `idspispopd` - Let's you walk through walls. Get a little closer to the monsters!
 * `idkfa` - Then press `5`. Use with caution!
 
