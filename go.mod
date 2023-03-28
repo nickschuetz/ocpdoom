@@ -1,3 +1,3 @@
-module kubedoom
+module ocpdoom
 
-go 1.20
+go 1.18

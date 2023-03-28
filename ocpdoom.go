@@ -122,7 +122,7 @@ func socketLoop(listener net.Listener, mode Mode) {
 					padding := strings.Repeat("\n", 255-len(entity))
 					_, err = conn.Write([]byte(entity + padding))
 					if err != nil {
-						log.Fatal("Could not write to socker file")
+						log.Fatal("Could not write to socket file")
 					}
 				}
 				conn.Close()
@@ -162,7 +162,12 @@ func main() {
 		log.Fatalf("Mode should be pods or namespaces")
 	}
 
-	listener, err := net.Listen("unix", "/dockerdoom.socket")
+	c := os.Remove("/app/socket/dockerdoom.socket")
+          if c != nil {
+             log.Println(c)
+        }
+
+	listener, err := net.Listen("unix", "/app/socket/dockerdoom.socket")
 	if err != nil {
 		log.Fatalf("Could not create socket file")
 	}
@@ -170,7 +175,7 @@ func main() {
 	log.Print("Create virtual display")
 	startCmd("/usr/bin/Xvfb :99 -ac -screen 0 640x480x24")
 	time.Sleep(time.Duration(2) * time.Second)
-	startCmd("x11vnc -geometry 640x480 -forever -usepw -display :99")
+	startCmd("x11vnc -geometry 640x480 -forever -rfbauth /app/.vnc/passwd -usepw -display :99")
 	log.Print("You can now connect to it with a VNC viewer at port 5900")
 
 	log.Print("Trying to start DOOM ...")
