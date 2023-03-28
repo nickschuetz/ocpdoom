@@ -49,7 +49,7 @@ oc create clusterrole monster-control --verb=get,list,watch,kill --resource=pods
 oc adm policy add-cluster-role-to-user monster-control -z doomguy -n ocpdoom
 ```
 
-3. Create the ocpdoom application and build the image from source using [oc new-app]().
+3. Create the ocpdoom application and build the image from source using [oc new-app](https://docs.openshift.com/container-platform/latest/applications/creating_applications/creating-applications-using-cli.html).
 
 ```bash
 oc new-app https://github.com/nickschuetz/ocpdoom.git --name=ocpdoom -n ocpdoom
