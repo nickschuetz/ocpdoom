@@ -1,6 +1,6 @@
 # DOOM on OpenShift
 
-[OpenShift Container Platform (OCP)](https://www.openshift.com) is capable of building and hosting applications. This includes old retro video games. One of the oldest and most popular retro FPS games [DOOM](https://en.wikipedia.org/wiki/Doom_(1993_video_game)) released in 1993 has been containerized and brought into Kubernetes via a culmination of projects ending up in one called [kubedoom](https://github.com/storax/kubedoom). It just so happens [Red Hat](www.redhat.com) the home of OpenShift has also been around for [30 years!](https://twitter.com/i/status/1640053183400771584) So for this exercise I thought it would be interesting to build it into a [Fedora](https://getfedora.org/) based image and run it on OpenShift. We’ll call this fork [ocpdoom](https://github.com/nickschuetz/ocpdoom).
+[OpenShift Container Platform (OCP)](https://www.openshift.com) is capable of building and hosting applications. This includes old retro video games. One of the oldest and most popular retro FPS games [DOOM](https://en.wikipedia.org/wiki/Doom_(1993_video_game)) released in 1993 has been containerized and brought into Kubernetes via a culmination of projects ending up in one called [kubedoom](https://github.com/storax/kubedoom). Like DOOM, [Red Hat](www.redhat.com) the home of OpenShift has also been around since [1993](https://twitter.com/i/status/1640053183400771584). So for this exercise I thought it would be cool bring their legacy together into a contemporary [Fedora](https://getfedora.org/) based image and run it on OpenShift. We’ll call this fork [ocpdoom](https://github.com/nickschuetz/ocpdoom).
 
 <br>
 
@@ -11,7 +11,7 @@ This requires you have a working instance of OpenShift 4 running before continui
 * [OpenShift On-prem](https://docs.openshift.com/container-platform/4.12/installing/installing_on_prem_assisted/installing-on-prem-assisted.html) (Bare Metal, Red Hat Virtualization, VMware, OpenStack)
 * OpenShift on the Cloud: [AWS](https://aws.amazon.com/rosa/), [Azure](https://azure.microsoft.com/en-us/products/openshift), [Google Cloud](https://console.cloud.google.com/marketplace/browse?q=red%20hat%20openshift&pli=1), [IBM Cloud](https://www.ibm.com/cloud/openshift)
 * [Microshift](https://github.com/openshift/microshift)
-* <a href="https://developers.redhat.com/products/openshift-local/overview" target="_blank">OpenShift Local</a>
+* [OpenShift Local](https://developers.redhat.com/products/openshift-local/overview)
 
 Note that for this particular example you’ll need access to the [cluster-admin cluster role](https://docs.openshift.com/container-platform/4.12/authentication/using-rbac.html#:~:text=Cluster%20administrators%20can%20use%20the,has%20access%20to%20their%20projects.) which will give you the ability manipulate permissions as needed. For that you will need full control of your OpenShift cluster. In addition, you will also need access to the [OpenShift Command Line Interface](https://docs.openshift.com/container-platform/4.12/cli_reference/openshift_cli/getting-started-cli.html) or “`oc`” tool.
 
@@ -19,7 +19,7 @@ Note that for this particular example you’ll need access to the [cluster-admin
 
 ## Building and Deploying DOOM
 
-Once you’re logged into your OpenShift cluster using `oc` the process of building and deploying the “ocpdoom” image is made very simple.
+Once you’re logged into your OpenShift cluster using `oc` the process of building and deploying the "ocpdoom” image is made very simple.
 
 1. Create some OpenShift Projects in which DOOM and it’s monsters will reside by running the following command from a terminal shell:
 
@@ -139,27 +139,27 @@ monster-5cf6c54d68-w6ctj   1/1     Running     0          3m27s
 
 ## Exposing DOOM
 
-In order for us to access DOOM from outside of OpenShift we’re going to use a Kubernetes service using the `oc expose` command:
+In order for us to access DOOM from outside of OpenShift we’re going to create a Kubernetes [service](https://docs.openshift.com/container-platform/latest/rest_api/network_apis/service-v1.html) using the [oc expose](https://docs.openshift.com/container-platform/4.12/cli_reference/openshift_cli/developer-cli-commands.html#oc-expose) command:
 
 ```bash
 oc expose deployment/ocpdoom --port 5900 -n ocpdoom
 ```
 
-Then we'll open up a connection to that service over the default VNC port we exposed using the `oc port-forward`:
+Then we'll open up a connection to that service over the default VNC port (TCP/5900) we exposed using the [oc port-forward](https://docs.openshift.com/container-platform/4.12/nodes/containers/nodes-containers-port-forwarding.html):
 
 ```bash
 oc port-foward deployment/ocpdoom 5900:5900 -n ocpdoom
 ```
 
-Leave that connection up and running and move on to the next section.
+Leave that connection up and running in the background and move on to the next section.
 
 <br>
 
 ## Connecting to DOOM
 
-The `ocpdoom` container houses a X11 and VNC server to display and connect to the game inside the container within the pod running inside of the OpenShift Container Platform. In order to do so you’ll need to download and install the TigerVNC `vncviewer` found [here](https://sourceforge.net/projects/tigervnc/files/stable/)
+The `ocpdoom` container houses X11 and VNC servers to display and connect to the game. In order to connect to DOOM you will need to download and install the TigerVNC `vncviewer` found [here](https://sourceforge.net/projects/tigervnc/files/stable/)
 
-Now open up the `vncviewer` application and enter in `<ip address>:5900` where the ip address is the host in which you're port-forwarding from. But make sure there is no firewall blocking access to TCP/5900 in-between you and the bastion host. 
+Once downloaded open up the `vncviewer` application and enter in `<ip address>:5900` where the ip address is the host in which you're port-forwarding from. But make sure there is no firewall blocking access to TCP/5900 in-between you and the bastion host. 
 
 Or if the `oc port-forward` was issued from your localhost just use `localhost:5900` like so:
 
@@ -192,9 +192,13 @@ Here’s where the monster pods come in. You’ll stumble upon an open field wit
 
 ![Monster](assets/images/monster-pod.png)
 
-Those monsters represent the pods in your monsters namespace. If you shoot those monsters that kills them and the pod they represent.
+Those monsters represent the pods in your monsters namespace. If you shoot those monsters that kills them and the pod they represent. You can view this on the OpenShift side by opening up another terminal and running the following command:
 
-However, there’s a problem! Since `oc new-app` also created a Kubernetes [ReplicaSet](https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/) it will respawn that missing pod monster. So really the only way to get rid of all the monster is through a non violent tactic and tell them nicely through the command line using the `oc scale` command:
+```bash
+watch oc get pods -n monsters
+```
+
+However, the monsters keep on respawing! Since `oc new-app` also created a Kubernetes [ReplicaSet](https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/) it will respawn that missing pod monster. So really the only way to get rid of all the monster is through a non violent tactic through the command line using the `oc scale` command:
 
 ```bash
 oc scale deployment monster --replicas=0 -n monsters 
