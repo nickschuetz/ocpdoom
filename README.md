@@ -13,7 +13,7 @@ This requires you have a working instance of OpenShift 4 running before continui
 * [Microshift](https://github.com/openshift/microshift)
 * <a href="https://developers.redhat.com/products/openshift-local/overview" target="_blank">OpenShift Local</a>
 
-Note that for this particular example you’ll need access to the [cluster-admin cluster role](https://docs.openshift.com/container-platform/4.12/authentication/using-rbac.html#:~:text=Cluster%20administrators%20can%20use%20the,has%20access%20to%20their%20projects.) which will give us the ability utilize [NodePort](https://docs.openshift.com/container-platform/latest/networking/configuring_ingress_cluster_traffic/configuring-ingress-cluster-traffic-nodeport.html) and manipulate permissions as needed. For that you will need full control of your OpenShift cluster. In addition, you will also need access to the [OpenShift Command Line Interface](https://docs.openshift.com/container-platform/4.12/cli_reference/openshift_cli/getting-started-cli.html) or “`oc`” tool.
+Note that for this particular example you’ll need access to the [cluster-admin cluster role](https://docs.openshift.com/container-platform/4.12/authentication/using-rbac.html#:~:text=Cluster%20administrators%20can%20use%20the,has%20access%20to%20their%20projects.) which will give you the ability manipulate permissions as needed. For that you will need full control of your OpenShift cluster. In addition, you will also need access to the [OpenShift Command Line Interface](https://docs.openshift.com/container-platform/4.12/cli_reference/openshift_cli/getting-started-cli.html) or “`oc`” tool.
 
 <br>
 
@@ -29,8 +29,6 @@ oc new-project ocpdoom
 ```
 
 2. We will now create a service account named `doomguy`, create a cluster role named `monster-control` and assign it to him:
-
-**NOTE: this is for demonstration puposes only. Do not run this on production systems.**
 
 ```bash
 oc create serviceaccount doomguy -n ocpdoom
@@ -74,13 +72,13 @@ Error from server (Forbidden): pods is forbidden: User "system:serviceaccount:oc
 2023/03/28 14:50:09 The following command failed: "[kubectl get pods -A -o go-template --template={{range .items}}{{.metadata.namespace}}/{{.metadata.name}} {{end}}]"
 ```
 
-It's because `ocpdoom` is trying to get a list of all pods in all namespaces. OpenShift restricts project to project, namespace to namespace interaction out of the box. Here's where the `doomguy` service account with his cluster role `monster-control` come in.
+It's because `ocpdoom` is trying to get a list of all pods in all namespaces. OpenShift restricts project to project/namespace to namespace interaction out of the box. Here's where the `doomguy` service account with his cluster role `monster-control` come in.
 
 Let's assign the newly created deployment the `doomguy` service account:
 ```bash
 oc set serviceaccount deployment ocpdoom doomguy -n ocpdoom
 ```
-We can also narrow down the scope of where we want ocpdoom to focus by setting the NAMESPACE environment variable in the deployment:
+We can also narrow down the scope of where we want ocpdoom to focus by setting the `NAMESPACE` environment variable in the deployment:
 
 ```bash
 oc set env deployment ocpdoom NAMESPACE=monsters
@@ -141,35 +139,29 @@ monster-5cf6c54d68-w6ctj   1/1     Running     0          3m27s
 
 ## Exposing DOOM
 
-In order for us to access DOOM from outside of OpenShift we’re going to use a Kubernetes service type [NodePort](https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport) for this particular example. To do that we will use [oc expose](https://docs.openshift.com/container-platform/latest/cli_reference/openshift_cli/developer-cli-commands.html#oc-expose) like so:
+In order for us to access DOOM from outside of OpenShift we’re going to use a Kubernetes service using the `oc expose` command:
 
 ```bash
-oc expose deployment/ocpdoom --port 5900 --type=NodePort
+oc expose deployment/ocpdoom --port 5900 -n ocpdoom
 ```
 
-## Connecting to DOOM
-
-The `ocpdoom` container houses a X11 and VNC server to display and connect to the game inside the container within the pod running inside of the OpenShift Container Platform. In order to do so you’ll need download and install the TigerVNC vncviewer found [here](https://sourceforge.net/projects/tigervnc/files/stable/).
-
-Now lets get the information we need to connect the `vncviewer` client:
-
-1. To get the external IP of the node the pod resides on and the NodePort use the following command:
+Then we'll open up a connection to that service over the default VNC port we exposed using the `oc port-forward`:
 
 ```bash
-echo $(oc get pods -l deployment=ocpdoom -o=jsonpath='{range .items[*]}{.status.hostIP}{end}'):$(oc get service -l app=ocpdoom -o=jsonpath='{range .items[*]}{.spec.ports[:1].nodePort}{"\n"}{end}' -n ocpdoom)
+oc port-foward deployment/ocpdoom 5900:5900 -n ocpdoom
 ```
 
-You should get an output with your specific `<hostIP>:<nodePort>`
+Leave that connection up and running and move on to the next section.
 
 <br>
 
-Example:
-```console
-192.168.7.126:32409
-```
+## Connecting to DOOM
 
+The `ocpdoom` container houses a X11 and VNC server to display and connect to the game inside the container within the pod running inside of the OpenShift Container Platform. In order to do so you’ll need to download and install the TigerVNC `vncviewer` found [here](https://sourceforge.net/projects/tigervnc/files/stable/)
 
-2. Open up your [vncviewer](https://sourceforge.net/projects/tigervnc/files/stable/) and point it to the `<hostIP>:<nodePort>` command. 
+Now open up the `vncviewer` application and enter in `<ip address>:5900` where the ip address is the host in which you're port-forwarding from. But make sure there is no firewall blocking access to TCP/5900 in-between you and the bastion host. 
+
+Or if the `oc port-forward` was issued from your localhost just use `localhost:5900` like so:
 
 
 <br>
