@@ -1,6 +1,6 @@
 # DOOM on OpenShift
 
-[OpenShift Container Platform (OCP)](https://www.openshift.com) is capable of building and hosting applications. This includes old retro video games. One of the oldest and most popular retro FPS games [DOOM](https://en.wikipedia.org/wiki/Doom_(1993_video_game)) released in 1993 has been containerized and brought into Kubernetes via a culmination of projects ending up in one called [kubedoom](https://github.com/storax/kubedoom). Like DOOM, [Red Hat](www.redhat.com) the home of OpenShift has also been around since [1993](https://twitter.com/i/status/1640053183400771584). So for this exercise I thought it would be cool bring their legacy together into a contemporary [Fedora](https://getfedora.org/) based image and run it on OpenShift. We’ll call this fork [ocpdoom](https://github.com/nickschuetz/ocpdoom).
+[OpenShift Container Platform (OCP)](https://www.openshift.com) is capable of building and hosting applications. This includes old retro video games. One of the oldest and most popular retro FPS games [DOOM](https://en.wikipedia.org/wiki/Doom_(1993_video_game)) released in 1993 has been containerized and brought into Kubernetes via a culmination of projects ending up in one called [kubedoom](https://github.com/storax/kubedoom). Like DOOM, [Red Hat](https://www.redhat.com) the home of OpenShift has also been around since [1993](https://www.redhat.com/en/blog/red-hatters-30-years-innovation-collaboration-and-community). So for this exercise I thought it would be cool bring their legacy together into a contemporary [Fedora](https://getfedora.org/) based image and run it on OpenShift. We’ll call this fork [ocpdoom](https://github.com/nickschuetz/ocpdoom).
 
 <br>
 
@@ -198,7 +198,7 @@ Those monsters represent the pods in your monsters namespace. If you shoot those
 watch oc get pods -n monsters
 ```
 
-The monsters keep on respawing! Since `oc new-app` also created a Kubernetes [ReplicaSet](https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/) it will respawn that missing pod monster(s). So really the only way to get rid of all the monsters once and for all is through a non violent tactic via the command line using the `oc scale` command:
+The monsters keep on respawing! Since `oc new-app` also created a Kubernetes [ReplicaSet](https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/) it will respawn that missing pod monster even after being killed. So really the only way to get rid of all the monsters once and for all is through a non violent tactic via the command line. One way we can accomplish this is using the `oc scale` command:
 
 ```bash
 oc scale deployment monster --replicas=0 -n monsters 
@@ -206,9 +206,17 @@ oc scale deployment monster --replicas=0 -n monsters
 
 Once all the pods are [Terminated](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-state-terminated) all the active monsters in the field should vanish. But watch out there are other creatures lurking around! Enjoy :boom:
 
-## Cheats
+<br>
 
-Enter the following codes for their cooresponding cheat:
+## Easy
+
+You can see by this example how easy it is to build deploy legacy applications of all kinds with OpenShift. Hopefully you had fun in the process and found some inspiration. Visit [developers.redhat.com/learn](https://developers.redhat.com/learn) for more examples of using OpenShift and the wonderful echosystem that comes with it.
+
+<br>
+
+## Bonus
+
+Enter the following codes while playing DOOM to unlock additional tricks:
 
 * `idspispopd` - Let's you walk through walls. Get a little closer to the monsters!
 * `idkfa` - Then press `5`. Use with caution!
