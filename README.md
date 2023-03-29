@@ -198,7 +198,7 @@ Those monsters represent the pods in your monsters namespace. If you shoot those
 watch oc get pods -n monsters
 ```
 
-However, the monsters keep on respawing! Since `oc new-app` also created a Kubernetes [ReplicaSet](https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/) it will respawn that missing pod monster. So really the only way to get rid of all the monster is through a non violent tactic through the command line using the `oc scale` command:
+The monsters keep on respawing! Since `oc new-app` also created a Kubernetes [ReplicaSet](https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/) it will respawn that missing pod monster(s). So really the only way to get rid of all the monsters once and for all is through a non violent tactic via the command line using the `oc scale` command:
 
 ```bash
 oc scale deployment monster --replicas=0 -n monsters 
