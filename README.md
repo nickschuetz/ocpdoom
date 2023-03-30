@@ -172,7 +172,7 @@ Example:
 
 Click `Connect`
 
-3. Enter Password "openshift" and click `OK`
+Enter Password "openshift" and click `OK`
 
 ![VNC Auth](assets/images/vnc-auth.png)
 
