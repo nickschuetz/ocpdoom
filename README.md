@@ -1,6 +1,6 @@
 # DOOM on OpenShift
 
-[OpenShift Container Platform (OCP)](https://www.openshift.com) is capable of building and hosting applications. This includes old retro video games. One of the oldest and most popular retro FPS games [DOOM](https://en.wikipedia.org/wiki/Doom_(1993_video_game)) released in 1993 has been containerized and brought into Kubernetes via a culmination of projects ending up in one called [kubedoom](https://github.com/storax/kubedoom). Like DOOM, [Red Hat](https://www.redhat.com) the home of OpenShift has also been around since [1993](https://www.redhat.com/en/blog/red-hatters-30-years-innovation-collaboration-and-community). So for this exercise I thought it would be cool bring their legacy together into a contemporary [Fedora](https://getfedora.org/) based image and run it on OpenShift. We’ll call this fork [ocpdoom](https://github.com/nickschuetz/ocpdoom).
+[OpenShift Container Platform (OCP)](https://www.openshift.com) is capable of building and hosting applications. This includes old retro video games. One of the oldest and most popular retro FPS games [DOOM](https://en.wikipedia.org/wiki/Doom_(1993_video_game)) released in 1993 has been containerized and brought into Kubernetes via a culmination of projects ending up in one called [kubedoom](https://github.com/storax/kubedoom). Like DOOM, [Red Hat](https://www.redhat.com) the home of OpenShift has also been around since [1993](https://www.redhat.com/en/blog/red-hatters-30-years-innovation-collaboration-and-community). So for this exercise I thought it would be cool bring their legacy together into a contemporary [Fedora](https://getfedora.org/) based image and run it on OpenShift. We’ll call this fork [ocpdoom](https://github.com/OpenShiftDemos/ocpdoom).
 
 <br>
 
@@ -39,7 +39,7 @@ oc adm policy add-cluster-role-to-user monster-control -z doomguy -n ocpdoom
 3. Create the ocpdoom application and build the image from source using [oc new-app](https://docs.openshift.com/container-platform/latest/applications/creating_applications/creating-applications-using-cli.html).
 
 ```bash
-oc new-app https://github.com/nickschuetz/ocpdoom.git --name=ocpdoom -n ocpdoom
+oc new-app https://github.com/OpenShiftDemos/ocpdoom.git --name=ocpdoom -n ocpdoom
 ```
 If you would like to see the build in progress:
 ```bash
@@ -106,7 +106,7 @@ You’re going to need some monsters. Or pods represented as [Demons](https://do
 
 
 ```bash
-oc new-app https://github.com/nickschuetz/monster.git --name=monster -n monsters
+oc new-app https://github.com/OpenShiftDemos/monster.git --name=monster -n monsters
 ```
 
 Observe the build progress:
