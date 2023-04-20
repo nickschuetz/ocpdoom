@@ -148,7 +148,7 @@ oc expose deployment/ocpdoom --port 5900 -n ocpdoom
 Then we'll open up a connection to that service over the default VNC port (TCP/5900) we exposed using the [oc port-forward](https://docs.openshift.com/container-platform/4.12/nodes/containers/nodes-containers-port-forwarding.html):
 
 ```bash
-oc port-foward deployment/ocpdoom 5900:5900 -n ocpdoom
+oc port-forward deployment/ocpdoom 5900:5900 -n ocpdoom
 ```
 
 Leave that connection up and running in the background and move on to the next section.
