@@ -170,17 +170,21 @@ Leave that connection up and running in the background and move on to the next s
 
 ### Use noVNC (browser)
 
-You can connect to your doom using a noVNC container.
+You can connect to ocpdoom via a browser - no software install!
+
+Using `oc` we build a container that contains `noVNC` with environment variables (ENDPOINT, PORT, PASSWORD) that connect to ocpdoom service exposed above.
 
 ```bash
 # create noVNC container
 oc new-app https://github.com/codekow/container-novnc.git \
   -n ocpdoom \
   --name novnc \
-  -e ENDPOINT=hostname \
-  -e PORT=5900 \
-  -e PASSWORD=openshift
+  -e ENDPOINT='ocpdoom' \
+  -e PORT='5900' \
+  -e PASSWORD='openshift'
 ```
+
+We then expose, or create a service, that we expose via a route (ingress, port:443) into OpenShift.
 
 ```bash
 # create service
