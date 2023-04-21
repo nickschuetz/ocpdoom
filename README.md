@@ -13,7 +13,7 @@ This requires you have a working instance of OpenShift 4 running before continui
 * [Microshift](https://github.com/openshift/microshift)
 * [OpenShift Local](https://developers.redhat.com/products/openshift-local/overview)
 
-Note that for this particular example you’ll need access to the [cluster-admin cluster role](https://docs.openshift.com/container-platform/4.12/authentication/using-rbac.html#:~:text=Cluster%20administrators%20can%20use%20the,has%20access%20to%20their%20projects.) which will give you the ability manipulate permissions as needed. For that you will need full control of your OpenShift cluster. In addition, you will also need access to the [OpenShift Command Line Interface](https://docs.openshift.com/container-platform/4.12/cli_reference/openshift_cli/getting-started-cli.html) or “`oc`” tool.
+Note that for this particular example you should not need access to the [cluster-admin cluster role](https://docs.openshift.com/container-platform/4.12/authentication/using-rbac.html#:~:text=Cluster%20administrators%20can%20use%20the,has%20access%20to%20their%20projects.) which gives you the ability manipulate permissions as needed. In addition, you will need access to the [OpenShift Command Line Interface](https://docs.openshift.com/container-platform/4.12/cli_reference/openshift_cli/getting-started-cli.html) or “`oc`” tool.
 
 <br>
 
@@ -32,8 +32,28 @@ oc new-project ocpdoom
 
 ```bash
 oc create serviceaccount doomguy -n ocpdoom
-oc create clusterrole monster-control --verb=get,list,watch,kill --resource=pods
-oc adm policy add-cluster-role-to-user monster-control -z doomguy -n ocpdoom
+oc create role monster-control --verb=get,list,watch,delete --resource=pods -n monsters
+```
+
+```
+# need to create service account rolebinding via YAML
+# oc adm policy add-role-to-user monster-control --role-namespace monsters doomguy -n monsters
+
+cat << YAML | oc apply -f -
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: monster-control
+  namespace: monsters
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: monster-control
+subjects:
+- kind: ServiceAccount
+  name: doomguy
+  namespace: ocpdoom
+YAML
 ```
 
 3. Create the ocpdoom application and build the image from source using [oc new-app](https://docs.openshift.com/container-platform/latest/applications/creating_applications/creating-applications-using-cli.html).
@@ -88,7 +108,7 @@ oc set serviceaccount deployment ocpdoom doomguy -n ocpdoom
 We can also narrow down the scope of where we want ocpdoom to focus by setting the `NAMESPACE` environment variable in the deployment:
 
 ```bash
-oc set env deployment ocpdoom NAMESPACE=monsters
+oc set env deployment ocpdoom NAMESPACE=monsters -n ocpdoom
 ```
 
 Now check to see if your application pod is in a READY and Running state:
@@ -184,15 +204,9 @@ oc new-app https://github.com/codekow/container-novnc.git \
   -e PASSWORD='openshift'
 ```
 
-We then expose, or create a service, that we expose via a route (ingress, port:443) into OpenShift.
+We then expose the novnc service, or create a route, that allows ingress via tls on port 443 into OpenShift.
 
 ```bash
-# create service
-oc expose deployment \
-  -n ocpdoom \
-  novnc \
-  --port 8080
-
 # create route
 oc expose service \
   -n ocpdoom \
