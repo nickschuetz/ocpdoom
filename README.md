@@ -41,15 +41,18 @@ oc adm policy add-cluster-role-to-user monster-control -z doomguy -n ocpdoom
 ```bash
 oc new-app https://github.com/nickschuetz/ocpdoom.git --name=ocpdoom -n ocpdoom
 ```
+
 If you would like to see the build in progress:
+
 ```bash
 oc logs bc/ocpdoom -f -n ocpdoom
 ```
 
 The above `oc new-app` command did several things.
+
 * Constructed and created a [Deployment](https://docs.openshift.com/container-platform/latest/applications/deployments/what-deployments-are.html) based on the contents in the specified Github repo.
 * Spun up a build pod and built the ocpdoom image and then pushed it into the native OpenShift image registry
-* Finally it attempts to deploy the image once it's present in the openshift registry. 
+* Finally it attempts to deploy the image once it's present in the openshift registry.
 
 Once the build is complete and the container is deployed you should see an output similar to this:
 
@@ -62,11 +65,13 @@ NAME                       READY   STATUS      RESTARTS      AGE
 ocpdoom-1-build            0/1     Completed   0             32m
 ocpdoom-69c578bf87-4mjvx   0/1     Error       2 (28s ago)   117s
 ```
+
 But why is the pod reporting an `Error` state!? Let's investigate with [oc logs](https://docs.openshift.com/container-platform/latest/logging/viewing-resource-logs.html):
 
 ```bash
 oc logs -l deployment=ocpdoom -n ocpdoom
 ```
+
 ```console
 Error from server (Forbidden): pods is forbidden: User "system:serviceaccount:ocpdoom:default" cannot list resource "pods" in API group "" at the cluster scope
 2023/03/28 14:50:09 The following command failed: "[kubectl get pods -A -o go-template --template={{range .items}}{{.metadata.namespace}}/{{.metadata.name}} {{end}}]"
@@ -75,9 +80,11 @@ Error from server (Forbidden): pods is forbidden: User "system:serviceaccount:oc
 It's because `ocpdoom` is trying to get a list of all pods in all namespaces. OpenShift restricts project to project/namespace to namespace interaction out of the box. Here's where the `doomguy` service account with his cluster role `monster-control` come in.
 
 Let's assign the newly created deployment the `doomguy` service account:
+
 ```bash
 oc set serviceaccount deployment ocpdoom doomguy -n ocpdoom
 ```
+
 We can also narrow down the scope of where we want ocpdoom to focus by setting the `NAMESPACE` environment variable in the deployment:
 
 ```bash
@@ -100,16 +107,16 @@ ocpdoom-74d97f4fbd-2h85d   1/1     Running     0          6s
 
 <br>
 
-## Monsters!
+## Monsters
 
 You’re going to need some monsters. Or pods represented as [Demons](https://doom.fandom.com/wiki/Demon) in this case. You’ll do this by deploying a simple little container:
-
 
 ```bash
 oc new-app https://github.com/nickschuetz/monster.git --name=monster -n monsters
 ```
 
 Observe the build progress:
+
 ```
 oc logs bc/monster -f -n monsters
 ```
@@ -117,7 +124,9 @@ oc logs bc/monster -f -n monsters
 ```bash
 oc get pods -n monsters
 ```
+
 With an output similar to this:
+
 ```console
 NAME                       READY   STATUS      RESTARTS   AGE
 monster-1-build            0/1     Completed   0          4m46s
@@ -125,9 +134,11 @@ monster-5cf6c54d68-w6ctj   1/1     Running     0          64s
 ```
 
 Optionally you can use [oc scale](https://docs.openshift.com/container-platform/latest/cli_reference/openshift_cli/developer-cli-commands.html#oc-scale) to adjust the amount of monsters you would like:
+
 ```bash
 oc scale deployment monster --replicas=2 -n monsters
 ```
+
 ```console
 NAME                       READY   STATUS      RESTARTS   AGE
 monster-1-build            0/1     Completed   0          7m9s
@@ -157,12 +168,41 @@ Leave that connection up and running in the background and move on to the next s
 
 ## Connecting to DOOM
 
+### Use noVNC (browser)
+
+You can connect to your doom using a noVNC container.
+
+```bash
+# create noVNC container
+oc new-app https://github.com/codekow/container-novnc.git \
+  -n ocpdoom \
+  --name novnc \
+  -e ENDPOINT=hostname \
+  -e PORT=5900 \
+  -e PASSWORD=openshift
+```
+
+```bash
+# create service
+oc expose deployment \
+  -n ocpdoom \
+  novnc \
+  --port 8080
+
+# create route
+oc expose service \
+  -n ocpdoom \
+  novnc \
+  --overrides='{"spec":{"tls":{"termination":"edge"}}}'
+```
+
+### Use `vncviewer`
+
 The `ocpdoom` container houses X11 and VNC servers to display and connect to the game. In order to connect to DOOM you will need to download and install the TigerVNC `vncviewer` found [here](https://sourceforge.net/projects/tigervnc/files/stable/)
 
-Once downloaded open up the `vncviewer` application and enter in `<ip address>:5900` where the ip address is the host in which you're port-forwarding from. But make sure there is no firewall blocking access to TCP/5900 in-between you and the bastion host. 
+Once downloaded open up the `vncviewer` application and enter in `<ip address>:5900` where the ip address is the host in which you're port-forwarding from. But make sure there is no firewall blocking access to TCP/5900 in-between you and the bastion host.
 
 Or if the `oc port-forward` was issued from your localhost just use `localhost:5900` like so:
-
 
 <br>
 
@@ -180,13 +220,13 @@ Enter Password "openshift" and click `OK`
 
 ## Welcome to DOOM
 
-Congratulations! You’re now playing Doom in a container within a Kubernetes pod on the OpenShift Container Platform accessing it all through a vnc server using vncviewer. 
+Congratulations! You’re now playing Doom in a container within a Kubernetes pod on the OpenShift Container Platform accessing it all through a vnc server using vncviewer.
 
 It should look something like this:
 
 ![Welcome to DOOM](assets/images/doom-begin.png)
 
-At this point you can run around and play the game using your keyboards `arrow keys` to move, `ctrl` shoot and `space bar` to open doors. 
+At this point you can run around and play the game using your keyboards `arrow keys` to move, `ctrl` shoot and `space bar` to open doors.
 
 Here’s where the monster pods come in. You’ll stumble upon an open field with monsters like this roaming around:
 
@@ -220,4 +260,3 @@ Enter the following codes while playing DOOM to unlock additional tricks:
 
 * `idspispopd` - Let's you walk through walls. Get a little closer to the monsters!
 * `idkfa` - Then press `5`. Use with caution!
-
