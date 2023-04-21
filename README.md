@@ -194,6 +194,10 @@ oc expose service \
   -n ocpdoom \
   novnc \
   --overrides='{"spec":{"tls":{"termination":"edge"}}}'
+
+route=$(oc -n ocpdoom get route novnc -o jsonpath='{.spec.host}')
+
+echo "https://${route}"
 ```
 
 ### Use `vncviewer`
