@@ -13,7 +13,7 @@ This requires you have a working instance of OpenShift 4 running before continui
 * [Microshift](https://github.com/openshift/microshift)
 * [OpenShift Local](https://developers.redhat.com/products/openshift-local/overview)
 
-Note that for this particular example you should not need access to the [cluster-admin cluster role](https://docs.openshift.com/container-platform/4.12/authentication/using-rbac.html#:~:text=Cluster%20administrators%20can%20use%20the,has%20access%20to%20their%20projects.) which gives you the ability manipulate permissions as needed. In addition, you will need access to the [OpenShift Command Line Interface](https://docs.openshift.com/container-platform/4.12/cli_reference/openshift_cli/getting-started-cli.html) or “`oc`” tool.
+Note you will need access to the [OpenShift Command Line Interface](https://docs.openshift.com/container-platform/4.12/cli_reference/openshift_cli/getting-started-cli.html) or “`oc`” tool.
 
 <br>
 
