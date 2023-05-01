@@ -216,7 +216,7 @@ oc expose service \
 route=$(oc -n ocpdoom get route novnc -o jsonpath='{.spec.host}')
 
 echo 'Login via a browser at the link below - using "openshift" as the password'
-echo "https://${route}"
+echo "http://${route}"
 ```
 
 ### Use `vncviewer`
