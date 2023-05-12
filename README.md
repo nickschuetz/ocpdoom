@@ -33,27 +33,7 @@ oc new-project ocpdoom
 ```bash
 oc create serviceaccount doomguy -n ocpdoom
 oc create role monster-control --verb=get,list,watch,delete --resource=pods -n monsters
-```
-
-```
-# need to create service account rolebinding via YAML
-# oc adm policy add-role-to-user monster-control --role-namespace monsters doomguy -n monsters
-
-cat << YAML | oc apply -f -
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: monster-control
-  namespace: monsters
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: monster-control
-subjects:
-- kind: ServiceAccount
-  name: doomguy
-  namespace: ocpdoom
-YAML
+oc create rolebinding --role monster-control --serviceaccount ocpdoom:doomguy -n monsters monster-control
 ```
 
 3. Create the ocpdoom application and build the image from source using [oc new-app](https://docs.openshift.com/container-platform/latest/applications/creating_applications/creating-applications-using-cli.html).
