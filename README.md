@@ -159,7 +159,7 @@ oc expose deployment/ocpdoom --port 5900 -n ocpdoom
 Then we'll open up a connection to that service over the default VNC port (TCP/5900) we exposed using the [oc port-forward](https://docs.openshift.com/container-platform/4.12/nodes/containers/nodes-containers-port-forwarding.html):
 
 ```bash
-oc port-foward deployment/ocpdoom 5900:5900 -n ocpdoom
+oc port-forward deployment/ocpdoom 5900:5900 -n ocpdoom
 ```
 
 Leave that connection up and running in the background and move on to the next section.
@@ -177,8 +177,8 @@ Using `oc` we build a container that contains `noVNC` with environment variables
 ```bash
 # create noVNC container
 oc new-app https://github.com/codekow/container-novnc.git \
-  -n ocpdoom \
   --name novnc \
+  -n ocpdoom \
   -e ENDPOINT='ocpdoom' \
   -e PORT='5900' \
   -e PASSWORD='openshift'
@@ -189,14 +189,20 @@ We then expose the novnc service, or create a route, that allows ingress via tls
 ```bash
 # create route
 oc expose service \
-  -n ocpdoom \
   novnc \
-  --overrides='{"spec":{"tls":{"termination":"edge"}}}'
+  -n ocpdoom
 
-route=$(oc -n ocpdoom get route novnc -o jsonpath='{.spec.host}')
+# redirect http (80) to https (443)
+oc patch route \
+  novnc \
+  -n ocpdoom \
+  --type=merge \
+  -p '{"spec":{"tls":{"termination":"edge","insecureEdgeTerminationPolicy":"Redirect"}}}'
+
+ROUTE=$(oc -n ocpdoom get route novnc -o jsonpath='{.spec.host}')
 
 echo 'Login via a browser at the link below - using "openshift" as the password'
-echo "http://${route}"
+echo "http://${ROUTE}"
 ```
 
 ### Use `vncviewer`
