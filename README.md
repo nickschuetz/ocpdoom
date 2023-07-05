@@ -13,7 +13,7 @@ This requires you have a working instance of OpenShift 4 running before continui
 * [Microshift](https://github.com/openshift/microshift)
 * [OpenShift Local](https://developers.redhat.com/products/openshift-local/overview)
 
-Note that for this particular example you’ll need access to the [cluster-admin cluster role](https://docs.openshift.com/container-platform/4.12/authentication/using-rbac.html#:~:text=Cluster%20administrators%20can%20use%20the,has%20access%20to%20their%20projects.) which will give you the ability manipulate permissions as needed. For that you will need full control of your OpenShift cluster. In addition, you will also need access to the [OpenShift Command Line Interface](https://docs.openshift.com/container-platform/4.12/cli_reference/openshift_cli/getting-started-cli.html) or “`oc`” tool.
+Note you will need access to the [OpenShift Command Line Interface](https://docs.openshift.com/container-platform/4.12/cli_reference/openshift_cli/getting-started-cli.html) or “`oc`” tool.
 
 <br>
 
@@ -32,8 +32,8 @@ oc new-project ocpdoom
 
 ```bash
 oc create serviceaccount doomguy -n ocpdoom
-oc create clusterrole monster-control --verb=get,list,watch,kill --resource=pods
-oc adm policy add-cluster-role-to-user monster-control -z doomguy -n ocpdoom
+oc create role monster-control --verb=get,list,watch,delete --resource=pods -n monsters
+oc create rolebinding --role monster-control --serviceaccount ocpdoom:doomguy -n monsters monster-control
 ```
 
 3. Create the ocpdoom application and build the image from source using [oc new-app](https://docs.openshift.com/container-platform/latest/applications/creating_applications/creating-applications-using-cli.html).
@@ -41,15 +41,18 @@ oc adm policy add-cluster-role-to-user monster-control -z doomguy -n ocpdoom
 ```bash
 oc new-app https://github.com/nickschuetz/ocpdoom.git --name=ocpdoom -n ocpdoom
 ```
+
 If you would like to see the build in progress:
+
 ```bash
 oc logs bc/ocpdoom -f -n ocpdoom
 ```
 
 The above `oc new-app` command did several things.
+
 * Constructed and created a [Deployment](https://docs.openshift.com/container-platform/latest/applications/deployments/what-deployments-are.html) based on the contents in the specified Github repo.
 * Spun up a build pod and built the ocpdoom image and then pushed it into the native OpenShift image registry
-* Finally it attempts to deploy the image once it's present in the openshift registry. 
+* Finally it attempts to deploy the image once it's present in the openshift registry.
 
 Once the build is complete and the container is deployed you should see an output similar to this:
 
@@ -62,11 +65,13 @@ NAME                       READY   STATUS      RESTARTS      AGE
 ocpdoom-1-build            0/1     Completed   0             32m
 ocpdoom-69c578bf87-4mjvx   0/1     Error       2 (28s ago)   117s
 ```
+
 But why is the pod reporting an `Error` state!? Let's investigate with [oc logs](https://docs.openshift.com/container-platform/latest/logging/viewing-resource-logs.html):
 
 ```bash
 oc logs -l deployment=ocpdoom -n ocpdoom
 ```
+
 ```console
 Error from server (Forbidden): pods is forbidden: User "system:serviceaccount:ocpdoom:default" cannot list resource "pods" in API group "" at the cluster scope
 2023/03/28 14:50:09 The following command failed: "[kubectl get pods -A -o go-template --template={{range .items}}{{.metadata.namespace}}/{{.metadata.name}} {{end}}]"
@@ -75,13 +80,15 @@ Error from server (Forbidden): pods is forbidden: User "system:serviceaccount:oc
 It's because `ocpdoom` is trying to get a list of all pods in all namespaces. OpenShift restricts project to project/namespace to namespace interaction out of the box. Here's where the `doomguy` service account with his cluster role `monster-control` come in.
 
 Let's assign the newly created deployment the `doomguy` service account:
+
 ```bash
 oc set serviceaccount deployment ocpdoom doomguy -n ocpdoom
 ```
+
 We can also narrow down the scope of where we want ocpdoom to focus by setting the `NAMESPACE` environment variable in the deployment:
 
 ```bash
-oc set env deployment ocpdoom NAMESPACE=monsters
+oc set env deployment ocpdoom NAMESPACE=monsters -n ocpdoom
 ```
 
 Now check to see if your application pod is in a READY and Running state:
@@ -100,16 +107,16 @@ ocpdoom-74d97f4fbd-2h85d   1/1     Running     0          6s
 
 <br>
 
-## Monsters!
+## Monsters
 
 You’re going to need some monsters. Or pods represented as [Demons](https://doom.fandom.com/wiki/Demon) in this case. You’ll do this by deploying a simple little container:
-
 
 ```bash
 oc new-app https://github.com/nickschuetz/monster.git --name=monster -n monsters
 ```
 
 Observe the build progress:
+
 ```
 oc logs bc/monster -f -n monsters
 ```
@@ -117,7 +124,9 @@ oc logs bc/monster -f -n monsters
 ```bash
 oc get pods -n monsters
 ```
+
 With an output similar to this:
+
 ```console
 NAME                       READY   STATUS      RESTARTS   AGE
 monster-1-build            0/1     Completed   0          4m46s
@@ -125,9 +134,11 @@ monster-5cf6c54d68-w6ctj   1/1     Running     0          64s
 ```
 
 Optionally you can use [oc scale](https://docs.openshift.com/container-platform/latest/cli_reference/openshift_cli/developer-cli-commands.html#oc-scale) to adjust the amount of monsters you would like:
+
 ```bash
 oc scale deployment monster --replicas=2 -n monsters
 ```
+
 ```console
 NAME                       READY   STATUS      RESTARTS   AGE
 monster-1-build            0/1     Completed   0          7m9s
@@ -148,7 +159,7 @@ oc expose deployment/ocpdoom --port 5900 -n ocpdoom
 Then we'll open up a connection to that service over the default VNC port (TCP/5900) we exposed using the [oc port-forward](https://docs.openshift.com/container-platform/4.12/nodes/containers/nodes-containers-port-forwarding.html):
 
 ```bash
-oc port-foward deployment/ocpdoom 5900:5900 -n ocpdoom
+oc port-forward deployment/ocpdoom 5900:5900 -n ocpdoom
 ```
 
 Leave that connection up and running in the background and move on to the next section.
@@ -157,12 +168,50 @@ Leave that connection up and running in the background and move on to the next s
 
 ## Connecting to DOOM
 
+### Use noVNC (browser)
+
+You can connect to ocpdoom via a browser - no software install!
+
+Using `oc` we build a container that contains `noVNC` with environment variables (ENDPOINT, PORT, PASSWORD) that connect to ocpdoom service exposed above.
+
+```bash
+# create noVNC container
+oc new-app https://github.com/codekow/container-novnc.git \
+  --name novnc \
+  -n ocpdoom \
+  -e ENDPOINT='ocpdoom' \
+  -e PORT='5900' \
+  -e PASSWORD='openshift'
+```
+
+We then expose the novnc service, or create a route, that allows ingress via tls on port 443 into OpenShift.
+
+```bash
+# create route
+oc expose service \
+  novnc \
+  -n ocpdoom
+
+# redirect http (80) to https (443)
+oc patch route \
+  novnc \
+  -n ocpdoom \
+  --type=merge \
+  -p '{"spec":{"tls":{"termination":"edge","insecureEdgeTerminationPolicy":"Redirect"}}}'
+
+ROUTE=$(oc -n ocpdoom get route novnc -o jsonpath='{.spec.host}')
+
+echo 'Login via a browser at the link below - using "openshift" as the password'
+echo "http://${ROUTE}"
+```
+
+### Use `vncviewer`
+
 The `ocpdoom` container houses X11 and VNC servers to display and connect to the game. In order to connect to DOOM you will need to download and install the TigerVNC `vncviewer` found [here](https://sourceforge.net/projects/tigervnc/files/stable/)
 
-Once downloaded open up the `vncviewer` application and enter in `<ip address>:5900` where the ip address is the host in which you're port-forwarding from. But make sure there is no firewall blocking access to TCP/5900 in-between you and the bastion host. 
+Once downloaded open up the `vncviewer` application and enter in `<ip address>:5900` where the ip address is the host in which you're port-forwarding from. But make sure there is no firewall blocking access to TCP/5900 in-between you and the bastion host.
 
 Or if the `oc port-forward` was issued from your localhost just use `localhost:5900` like so:
-
 
 <br>
 
@@ -180,13 +229,13 @@ Enter Password "openshift" and click `OK`
 
 ## Welcome to DOOM
 
-Congratulations! You’re now playing Doom in a container within a Kubernetes pod on the OpenShift Container Platform accessing it all through a vnc server using vncviewer. 
+Congratulations! You’re now playing Doom in a container within a Kubernetes pod on the OpenShift Container Platform accessing it all through a vnc server using vncviewer.
 
 It should look something like this:
 
 ![Welcome to DOOM](assets/images/doom-begin.png)
 
-At this point you can run around and play the game using your keyboards `arrow keys` to move, `ctrl` shoot and `space bar` to open doors. 
+At this point you can run around and play the game using your keyboards `arrow keys` to move, `ctrl` shoot and `space bar` to open doors.
 
 Here’s where the monster pods come in. You’ll stumble upon an open field with monsters like this roaming around:
 
@@ -220,4 +269,3 @@ Enter the following codes while playing DOOM to unlock additional tricks:
 
 * `idspispopd` - Let's you walk through walls. Get a little closer to the monsters!
 * `idkfa` - Then press `5`. Use with caution!
-
