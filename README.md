@@ -205,9 +205,9 @@ echo 'Login via a browser at the link below - using "openshift" as the password'
 echo "http://${ROUTE}"
 ```
 
-### Use `vncviewer`
+### Or use `vncviewer`
 
-The `ocpdoom` container houses X11 and VNC servers to display and connect to the game. In order to connect to DOOM you will need to download and install the TigerVNC `vncviewer` found [here](https://sourceforge.net/projects/tigervnc/files/stable/)
+The `ocpdoom` container houses X11 and VNC servers to display and connect to the game. In order to connect to DOOM with a vnc client you can download and install the TigerVNC `vncviewer` found [here](https://sourceforge.net/projects/tigervnc/files/stable/)
 
 Once downloaded open up the `vncviewer` application and enter in `<ip address>:5900` where the ip address is the host in which you're port-forwarding from. But make sure there is no firewall blocking access to TCP/5900 in-between you and the bastion host.
 
